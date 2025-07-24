@@ -19,8 +19,9 @@ function App() {
           Learn React
         </a>
       </header>
+      <h1>Hello React CI/CD Demo</h1>
     </div>
   );
-} 
+}
 
 export default App;
