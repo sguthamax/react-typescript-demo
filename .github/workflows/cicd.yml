@@ -11,20 +11,29 @@ jobs:
     steps:
       - name: Checkout Source
         uses: actions/checkout@v3
+
       - name: Login to Docker Hub
         run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+
       - name: Build Docker Image
         run: docker build -t sguthamax/reactj-typescript-demo .
-      - name: Publish image to docker hub
-        run: docker push sguthamax/reactj-typescript-demo:latest   
 
-  deploy: 
+      - name: Push Image to Docker Hub
+        run: docker push sguthamax/reactj-typescript-demo:latest
+
+  deploy:
     needs: build
-    runs-on: aws-ec2    
+    runs-on: ubuntu-latest
+
     steps:
-      - name: Pull image from docker hub
-        run: docker pull sguthamax/reactj-typescript-demo:latest 
-      - name: Delete Old Container
-        run: docker rm -f reactContainer
-      - name: Run docker container
-        run: docker run -d -p 3000:80 --name reactContainer sguthamax/reactj-typescript-demo   
+      - name: Deploy on EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_REACT_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+            docker pull sguthamax/reactj-typescript-demo:latest
+            docker rm -f reactContainer || true
+            docker run -d -p 3000:80 --name reactContainer sguthamax/reactj-typescript-demo
